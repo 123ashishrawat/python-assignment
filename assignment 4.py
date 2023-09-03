@@ -88,3 +88,79 @@ predicted_delivery_time = model.predict([[sorting_time]])
 print(f"Predicted Delivery Time for Sorting Time {sorting_time}: {predicted_delivery_time[0]:.2f} hours")
 
 
+
+import pandas as pd
+import numpy as np
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+import matplotlib.pyplot as plt
+
+# Create a DataFrame with the provided data
+
+data=pd.read_csv("delivery_time.csv") # Create a DataFrame with the given data
+df = pd.DataFrame(data)
+
+# Define a function to build and evaluate regression models with different transformations
+def build_and_evaluate_model(data, x_col, y_col, transformation_name):
+    # Apply the specified transformation to the x variable
+    if transformation_name == 'log':
+        data[x_col] = np.log(data[x_col])
+    elif transformation_name == 'square':
+        data[x_col] = np.square(data[x_col])
+    elif transformation_name == 'sqrt':
+        data[x_col] = np.sqrt(data[x_col])
+
+    # Split the data into features (X) and target (y)
+    X = data[[x_col]]
+    y = data[y_col]
+
+    # Create and fit a linear regression model
+    model = LinearRegression()
+    model.fit(X, y)
+
+    # Predict the delivery time
+    y_pred = model.predict(X)
+
+    # Calculate the RMSE (Root Mean Squared Error)
+    rmse = np.sqrt(mean_squared_error(y, y_pred))
+
+    return model, rmse
+
+# List of transformation names
+transformations = ['none', 'log', 'square', 'sqrt']
+
+# Create a DataFrame to store RMSE values for each transformation
+rmse_results = pd.DataFrame(columns=['Transformation', 'RMSE'])
+
+# Build models with different transformations and calculate RMSE values
+for transformation in transformations:
+    if transformation == 'none':
+        x_col_name = 'Sorting Time (Original)'
+    else:
+        x_col_name = f'Sorting Time ({transformation.capitalize()})'
+    model, rmse = build_and_evaluate_model(data.copy(), 'Sorting Time', 'Delivery Time', transformation)
+    rmse_results = rmse_results.append({'Transformation': x_col_name, 'RMSE': rmse}, ignore_index=True)
+
+# Display RMSE results
+print(rmse_results)
+
+# Plot RMSE values for different transformations
+plt.figure(figsize=(8, 6))
+plt.bar(rmse_results['Transformation'], rmse_results['RMSE'])
+plt.xlabel('Transformation')
+plt.ylabel('RMSE')
+plt.title('RMSE for Different Transformations')
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
